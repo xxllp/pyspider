@@ -14,9 +14,9 @@ from .mongodbbase import SplitTableMixin
 
 
 class TaskDB(SplitTableMixin, BaseTaskDB):
-    collection_prefix = ''
+    collection_prefix = 'taskdb'
 
-    def __init__(self, url, database='taskdb'):
+    def __init__(self, url, database='spiderdb'):
         self.conn = MongoClient(url)
         self.conn.admin.command("ismaster")
         self.database = self.conn[database]
@@ -62,10 +62,6 @@ class TaskDB(SplitTableMixin, BaseTaskDB):
                 yield self._parse(task)
 
     def get_task(self, project, taskid, fields=None):
-        if project not in self.projects:
-            self._list_project()
-        if project not in self.projects:
-            return
         collection_name = self._collection_name(project)
         ret = self.database[collection_name].find_one({'taskid': taskid}, fields)
         if not ret:
