@@ -14,7 +14,7 @@ from pyspider.database.base.projectdb import ProjectDB as BaseProjectDB
 class ProjectDB(BaseProjectDB):
     __collection_name__ = 'projectdb'
 
-    def __init__(self, url, database='projectdb'):
+    def __init__(self, url, database='spiderdb'):
         self.conn = MongoClient(url)
         self.conn.admin.command("ismaster")
         self.database = self.conn[database]
