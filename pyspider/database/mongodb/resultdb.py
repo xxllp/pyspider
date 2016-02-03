@@ -13,32 +13,24 @@ from .mongodbbase import SplitTableMixin
 
 
 class ResultDB(SplitTableMixin, BaseResultDB):
-    collection_prefix = ''
+    collection_prefix = 'resultdb'
 
-    def __init__(self, url, database='resultdb'):
+    def __init__(self, url, database='spiderdb'):
         self.conn = MongoClient(url)
         self.conn.admin.command("ismaster")
         self.database = self.conn[database]
         self.projects = set()
 
         self._list_project()
-        for project in self.projects:
-            collection_name = self._collection_name(project)
-            self.database[collection_name].ensure_index('taskid')
 
     def _parse(self, data):
-        data['_id'] = str(data['_id'])
-        if 'result' in data:
-            data['result'] = json.loads(data['result'])
         return data
 
     def _stringify(self, data):
-        if 'result' in data:
-            data['result'] = json.dumps(data['result'])
         return data
 
     def save(self, project, taskid, url, result):
-        collection_name = self._collection_name(project)
+        collection_name = self.collection_prefix
         obj = {
             'taskid': taskid,
             'url': url,
@@ -50,20 +42,13 @@ class ResultDB(SplitTableMixin, BaseResultDB):
         )
 
     def select(self, project, fields=None, offset=0, limit=0):
-        if project not in self.projects:
-            self._list_project()
-        if project not in self.projects:
-            return
-        collection_name = self._collection_name(project)
+        collection_name = self.collection_prefix
         for result in self.database[collection_name].find({}, fields, skip=offset, limit=limit):
             yield self._parse(result)
 
     def count(self, project):
-        if project not in self.projects:
-            self._list_project()
-        if project not in self.projects:
-            return
-        collection_name = self._collection_name(project)
+
+        collection_name = self.collection_prefix
         return self.database[collection_name].count()
 
     def get(self, project, taskid, fields=None):
@@ -71,7 +56,7 @@ class ResultDB(SplitTableMixin, BaseResultDB):
             self._list_project()
         if project not in self.projects:
             return
-        collection_name = self._collection_name(project)
+        collection_name = self.collection_prefix
         ret = self.database[collection_name].find_one({'taskid': taskid}, fields)
         if not ret:
             return ret
